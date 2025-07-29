@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Nomenclature</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f8fa;
+        }
+        .content-area {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .content-area.open {
+            max-height: 10000px; /* Increased for quiz content */
+        }
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+        .transition-all {
+            transition: all 0.3s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .hidden-by-search, .hidden {
+            display: none !important;
+        }
+        pre {
+            background-color: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f9fafb;
+        }
+        /* Overlay Styles */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #whiteboard-canvas {
+            touch-action: none; /* Prevents scrolling on canvas touch */
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-5xl font-bold text-gray-900">AI Nomenclature</h1>
+            <p class="mt-3 text-xl text-gray-500">Your guide to the world of Artificial Intelligence.</p>
+        </header>
+
+        <div class="mb-10 sticky top-4 z-20">
+            <input type="search" id="search-bar" placeholder="Search for any AI term..." class="w-full p-4 text-lg border border-gray-300 rounded-full shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+        </div>
+
+        <main id="nomenclature-container" class="space-y-12">
+            <!-- Quiz Section -->
+            <section id="quiz-section-container">
+                 <div class="card bg-white p-5 rounded-xl border border-gray-200 shadow-sm transition-all">
+                    <div class="collapsible-header flex justify-between items-start cursor-pointer">
+                        <div class="flex items-start space-x-4">
+                            <div class="text-3xl flex-shrink-0 w-8 text-center">🧐</div>
+                            <div class="flex-grow">
+                                <h3 class="font-bold text-lg text-gray-900">Test Your Knowledge</h3>
+                                <p class="text-gray-500 text-sm">Take a quiz to see how much you've learned.</p>
+                            </div>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400 transition-transform flex-shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="content-area pt-4 border-t border-gray-200 mt-4">
+                        <div id="quiz-setup">
+                            <label for="question-count" class="block mb-2 font-semibold">How many questions would you like?</label>
+                            <select id="question-count" class="p-2 border rounded-md">
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">All 50</option>
+                            </select>
+                            <button id="start-quiz-btn" class="ml-4 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors">Start Quiz</button>
+                        </div>
+                        <div id="quiz-questions" class="hidden space-y-6"></div>
+                        <div id="quiz-results" class="hidden"></div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Dynamic Content Sections -->
+        </main>
+    </div>
+    
+    <!-- Quiz Review Overlay -->
+    <div id="quiz-overlay" class="overlay hidden">
+        <div class="bg-white rounded-lg shadow-2xl w-11/12 md:w-3/4 lg:w-1/2 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
+                <h2 class="text-2xl font-bold">Quiz Review</h2>
+                <button class="close-overlay-btn text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+            </div>
+            <div id="review-content" class="p-6 space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- Whiteboard Overlay -->
+    <div id="whiteboard-overlay" class="overlay hidden">
+        <div class="bg-white rounded-lg shadow-2xl w-11/12 h-[90vh] flex flex-col">
+            <div class="p-4 border-b flex justify-between items-center flex-shrink-0">
+                <h2 id="whiteboard-title" class="text-2xl font-bold">Whiteboard</h2>
+                <button class="close-overlay-btn text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+            </div>
+            <div class="flex-grow flex flex-col md:flex-row min-h-0">
+                <div id="whiteboard-content-panel" class="w-full md:w-1/3 p-4 overflow-y-auto border-r"></div>
+                <div class="w-full md:w-2/3 p-2 flex flex-col">
+                    <div class="flex items-center space-x-4 mb-2 flex-shrink-0">
+                        <label for="colorPicker">Color:</label>
+                        <input type="color" id="colorPicker" value="#000000">
+                        <label for="brushSize">Size:</label>
+                        <input type="range" id="brushSize" min="1" max="20" value="3" class="w-32">
+                        <button id="clearCanvas" class="bg-red-500 text-white px-3 py-1 rounded-md text-sm">Clear</button>
+                    </div>
+                    <div class="flex-grow border rounded-md bg-gray-50">
+                        <canvas id="whiteboard-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- Data Definitions ---
+        const quizQuestions = [
+            { question: "What type of data is organized in rows and columns, like in a SQL table?", options: ["Unstructured", "Semi-Structured", "Structured", "Nominal"], answer: "Structured" },
+            { question: "If a model is trained on data with known inputs and outputs, what is this type of labeling called?", options: ["Unsupervised", "Supervised", "Reinforcement", "Semi-Supervised"], answer: "Supervised" },
+            { question: "Which data type represents labels with a meaningful order but unequal gaps between them?", options: ["Nominal", "Discrete", "Continuous", "Ordinal"], answer: "Ordinal" },
+            { question: "What is the primary use case for Unlabeled (Unsupervised) data?", options: ["Classification", "Regression", "Clustering", "Forecasting"], answer: "Clustering" },
+            { question: "Stock prices and sensor readings are examples of which data modality?", options: ["Image", "Text", "Time-Series", "Audio"], answer: "Time-Series" },
+            { question: "Which field of AI is a subset of Machine Learning and uses deep neural networks?", options: ["Data Science", "Deep Learning", "Reinforcement Learning", "NLP"], answer: "Deep Learning" },
+            { question: "CNNs are specially designed for what type of data?", options: ["Sequential data", "Text data", "Image and spatial data", "Time-series data"], answer: "Image and spatial data" },
+            { question: "What is the main purpose of an LSTM network?", options: ["To handle long-term dependencies in sequential data", "To classify images", "To cluster data points", "To perform regression"], answer: "To handle long-term dependencies in sequential data" },
+            { question: "Which field of AI deals with understanding and generating human language?", options: ["Computer Vision", "Data Science", "Natural Language Processing (NLP)", "Robotics"], answer: "Natural Language Processing (NLP)" },
+            { question: "What does RAG stand for?", options: ["Retrieval-Augmented Generation", "Recurrent-Assisted Generation", "Reinforced-Action Grading", "Regression-Assisted Grouping"], answer: "Retrieval-Augmented Generation" },
+            { question: "An autonomous system that perceives, reasons, and acts to achieve goals is called an:", options: ["LLM", "AI Agent", "API", "ETL"], answer: "AI Agent" },
+            { question: "Which prompting technique involves providing a few input-output examples to the model?", options: ["Zero-Shot Prompting", "Chain-of-Thought Prompting", "Few-Shot Prompting", "Role-Play Prompting"], answer: "Few-Shot Prompting" },
+            { question: "The practice of designing and managing the context provided to an LLM for multi-turn conversations is known as:", options: ["Prompt Engineering", "Context Engineering", "Model Tuning", "Data Wrangling"], answer: "Context Engineering" },
+            { question: "In model evaluation, which metric is most important when false negatives are very costly (e.g., cancer detection)?", options: ["Accuracy", "Precision", "Recall", "F1-Score"], answer: "Recall" },
+            { question: "What does Perplexity measure in LLM evaluation?", options: ["Semantic similarity", "How well a model predicts the next word", "Overlap with human references", "Factual correctness"], answer: "How well a model predicts the next word" },
+            { question: "Which 'Ops' practice focuses on automating the ML lifecycle, from development to deployment and monitoring?", options: ["AIOps", "DevOps", "LLMOps", "MLOps"], answer: "MLOps" },
+            { question: "Running a model on a local device like a smartphone is an example of which deployment architecture?", options: ["Batch Deployment", "Online Deployment", "Edge Deployment", "Hybrid Deployment"], answer: "Edge Deployment" },
+            { question: "What is the term for when a generative AI model produces factually incorrect or fabricated outputs?", options: ["Overfitting", "Underfitting", "Hallucination", "Bias"], answer: "Hallucination" },
+            { question: "A parameter used in generative models to control randomness is called:", options: ["Temperature", "Inference", "Token", "Bias"], answer: "Temperature" },
+            { question: "What is the primary focus of AIOps?", options: ["Managing the LLM lifecycle", "Using AI to automate IT operations", "Building ethical AI systems", "Deploying models to the edge"], answer: "Using AI to automate IT operations" },
+            { question: "JSON and XML files are examples of what data structure?", options: ["Structured", "Unstructured", "Semi-Structured", "Continuous"], answer: "Semi-Structured" },
+            { question: "Interpreting meaning and intent from language is the goal of which NLP subfield?", options: ["NLG", "NLU", "CV", "RL"], answer: "NLU" },
+            { question: "What is the main symptom of a model that is overfitting?", options: ["High training error, high test error", "Low training error, high test error", "Low training error, low test error", "High training error, low test error"], answer: "Low training error, high test error" },
+            { title: "What is the key difference between Nominal and Ordinal data?", options: ["Nominal is numerical, Ordinal is categorical", "Nominal has order, Ordinal does not", "Ordinal has meaningful order, Nominal does not", "They are the same"], answer: "Ordinal has meaningful order, Nominal does not" },
+            { question: "What is the core concept behind Reinforcement Learning?", options: ["Learning from labeled data", "Learning from unlabeled data", "Learning from rewards and punishments", "Learning from human feedback"], answer: "Learning from rewards and punishments" },
+            { question: "What is the purpose of an embedding in the context of RAG?", options: ["To generate the final text", "To represent text as numerical vectors for similarity search", "To fine-tune the LLM", "To check for hallucinations"], answer: "To represent text as numerical vectors for similarity search" },
+            { question: "Which of these is NOT a key component of AI/ML Deployment?", options: ["Model Serving", "Monitoring & Observability", "Feature Engineering", "Data Pipelines"], answer: "Feature Engineering" },
+            { question: "A centralized repository for managing and serving ML features is called a:", options: ["Data Warehouse", "Feature Store", "Data Lake", "Model Registry"], answer: "Feature Store" },
+            { question: "What does XAI stand for?", options: ["External AI", "Explainable AI", "Extended AI", "Executable AI"], answer: "Explainable AI" },
+            { question: "The internal values (weights and biases) learned by a model during training are called:", options: ["Tokens", "Parameters", "Hyperparameters", "Metrics"], answer: "Parameters" },
+            { question: "What is a Deepfake?", options: ["A very complex neural network", "A factual error made by an AI", "Synthetic media created by AI to impersonate someone", "A type of AI guardrail"], answer: "Synthetic media created by AI to impersonate someone" },
+            { question: "A system that requires human oversight during its operation is known as:", options: ["Autonomous AI", "Human-in-the-Loop (HITL)", "General AI", "Supervised AI"], answer: "Human-in-the-Loop (HITL)" },
+            { question: "What is the main goal of Responsible AI?", options: ["To make models as accurate as possible", "To make models run as fast as possible", "To design and deploy AI systems ethically and safely", "To reduce the cost of training models"], answer: "To design and deploy AI systems ethically and safely" },
+            { question: "In which situation would you prioritize Precision over Recall?", options: ["Diagnosing a rare disease", "Filtering spam emails", "Finding all relevant documents in a search", "Predicting customer churn"], answer: "Filtering spam emails" },
+            { title: "What is the main challenge LLMOps aims to solve?", options: ["Data labeling", "IT infrastructure monitoring", "Managing the high cost and latency of LLMs", "Algorithm selection"], answer: "Managing the high cost and latency of LLMs" },
+            { question: "Image Segmentation is a task within which AI field?", options: ["NLP", "Data Science", "Computer Vision", "Reinforcement Learning"], answer: "Computer Vision" },
+            { question: "The process of using a trained model to make predictions is called:", options: ["Training", "Inference", "Deployment", "Validation"], answer: "Inference" },
+            { question: "If a model performs poorly on both training and test data, it is likely:", options: ["Overfitting", "Underfitting", "Biased", "Hallucinating"], answer: "Underfitting" },
+            { question: "Which prompt engineering technique encourages a model to reason step-by-step?", options: ["Few-Shot", "Zero-Shot", "Role-Play", "Chain-of-Thought"], answer: "Chain-of-Thought" },
+            { question: "What is the purpose of AI Guardrails?", options: ["To accelerate model training", "To keep AI behavior within ethical and legal boundaries", "To increase model creativity", "To manage data pipelines"], answer: "To keep AI behavior within ethical and legal boundaries" },
+            { question: "Which is an example of Discrete data?", options: ["Temperature", "Height", "Number of website visitors", "Weight"], answer: "Number of website visitors" },
+            { question: "What is the key characteristic of an AI Agent?", options: ["It can only process text", "It is always supervised by a human", "It is autonomous and acts to achieve goals", "It is only used for playing games"], answer: "It is autonomous and acts to achieve goals" },
+            { question: "Which metric is a harmonic mean of Precision and Recall?", options: ["Accuracy", "ROC-AUC", "F1-Score", "MSE"], answer: "F1-Score" },
+            { question: "What is the primary goal of Data Analysis?", options: ["To build predictive models", "To enable systems to learn", "To understand the past/present through descriptive stats", "To deploy models to production"], answer: "To understand the past/present through descriptive stats" },
+            { question: "Which of these is NOT a type of ML?", options: ["Supervised", "Unsupervised", "Predictive", "Reinforcement"], answer: "Predictive" },
+            { question: "What is a key component of RAG that happens before generation?", options: ["Information Retrieval", "Model Training", "Data Labeling", "Human Feedback"], answer: "Information Retrieval" },
+            { question: "Multi-Agentic Orchestration refers to:", options: ["A single agent performing many tasks", "Multiple AI agents collaborating on a shared goal", "A human managing multiple AI agents", "A type of neural network"], answer: "Multiple AI agents collaborating on a shared goal" },
+            { question: "What are 'tokens' in the context of an LLM?", options: ["The model's internal parameters", "The basic units of text the model processes", "The rewards given in reinforcement learning", "The security keys for an API"], answer: "The basic units of text the model processes" },
+            { question: "A high 'Temperature' setting will likely make an LLM's output:", options: ["More focused and deterministic", "More creative and diverse", "Shorter and more concise", "More factually accurate"], answer: "More creative and diverse" },
+            { question: "What is the main purpose of a Confusion Matrix?", options: ["To visualize the model's architecture", "To understand the types of errors a classification model is making", "To track the cost of training", "To compare different models' accuracy"], answer: "To understand the types of errors a classification model is making" }
+        ];
+        const aiNomenclatureData = [
+            {
+                title: "🧠 Data in AI",
+                description: "Understanding data is foundational. It can be classified in multiple, often overlapping ways.",
+                items: [
+                    { 
+                        icon: "🔧", 
+                        title: "By Structure", 
+                        description: "How data is organized.", 
+                        tags: ["Data Type", "Organization"], 
+                        subItems: [
+                            { title: "Structured", content: "<b>Description:</b> Organized in rows/columns, relational.<br><b>Examples:</b> Spreadsheets, SQL tables"},
+                            { title: "Semi-Structured", content: "<b>Description:</b> Some structure via tags.<br><b>Examples:</b> JSON, XML, logs"},
+                            { title: "Unstructured", content: "<b>Description:</b> No predefined format.<br><b>Examples:</b> Images, videos, audio, free-text"}
+                        ]
+                    },
+                    { 
+                        icon: "🏷️", 
+                        title: "By Labeling (Supervision)", 
+                        description: "The level of human supervision involved.", 
+                        tags: ["Data Type", "Supervision"], 
+                        subItems: [
+                            { title: "Labeled (Supervised)", content: "<b>Description:</b> Inputs paired with known outputs.", subItems: [
+                                { title: "Use Case: Classification", content: "Predicting a category or class (e.g., spam vs. not spam)." },
+                                { title: "Use Case: Regression", content: "Predicting a continuous value (e.g., house price)." }
+                            ]},
+                            { title: "Unlabeled (Unsupervised)", content: "<b>Description:</b> No known outputs.", subItems: [
+                                { title: "Use Case: Clustering", content: "Grouping similar data points together (e.g., customer segmentation)." },
+                                { title: "Use Case: Anomaly Detection", content: "Identifying rare items or events (e.g., fraud detection)." }
+                            ]},
+                            { title: "Partially Labeled / Weakly Labeled", content: "<b>Description:</b> Few/Noisy labels.", subItems: [
+                                { title: "Use Case: Semi-supervised Learning", content: "Using a small amount of labeled data to guide learning on a large amount of unlabeled data." },
+                                { title: "Use Case: Active Learning", content: "The model queries a user to label the most informative data points." }
+                            ]}
+                        ]
+                    },
+                    { 
+                        icon: "🖼️", 
+                        title: "By Data Format / Modality", 
+                        description: "The format or medium of the data.", 
+                        tags: ["Data Type", "Format"], 
+                        subItems: [
+                            { title: "Text", content: "<b>Description:</b> Sequence of words or tokens.<br><b>Examples:</b> Tweets, documents"},
+                            { title: "Image", content: "<b>Description:</b> Pixel data.<br><b>Examples:</b> X-rays, selfies, logos"},
+                            { title: "Audio", content: "<b>Description:</b> Waveform/spectrograms.<br><b>Examples:</b> Speech, music"},
+                            { title: "Video", content: "<b>Description:</b> Sequence of frames.<br><b>Examples:</b> CCTV, YouTube videos"},
+                            { title: "Time-Series", content: "<b>Description:</b> Sequential time-based data.<br><b>Examples:</b> Stock prices, sensor readings"}
+                        ]
+                    },
+                    { 
+                        icon: "🔢", 
+                        title: "By Measurement Scale", 
+                        description: "The statistical nature of the data.", 
+                        tags: ["Data Type", "Statistics"], 
+                        subItems: [
+                            { title: "Categorical Data", content: "Represents characteristics or labels.", subItems: [
+                                { title: "Nominal", content: "<b>Description:</b> Labels without order.<br><b>Examples:</b> Gender, Country, Product ID" },
+                                { title: "Ordinal 🪜", content: "<b>Description:</b> Labels with meaningful order, but unequal gaps.<br><b>Examples:</b> Ratings (Bad < OK < Good), Class ranks" }
+                            ]},
+                            { title: "Numerical Data", content: "Represents measurable quantities.", subItems: [
+                                { title: "Discrete", content: "<b>Description:</b> Countable numbers.<br><b>Examples:</b> Number of users, steps taken" },
+                                { title: "Continuous", content: "<b>Description:</b> Measurable, can take any value.<br><b>Examples:</b> Temperature, Weight, Height" }
+                            ]}
+                        ]
+                    },
+                     { icon: "💡", title: "Key Data Insight", description: "An important distinction in data types.", tags: ["Concept", "Data"], content: "<b>Ordinal Data:</b> This is a special type of categorical data where the order is meaningful, but the differences between values are not necessarily equal." },
+                ]
+            },
+            {
+                title: "🤖 The AI Landscape",
+                description: "Exploring the core fields, architectures, and roles within Artificial Intelligence.",
+                items: [
+                    { 
+                        icon: "💡", 
+                        title: "Artificial Intelligence (AI)", 
+                        description: "The broad science of making machines mimic human intelligence.", 
+                        tags: ["Field", "Core Concept"], 
+                        content: "<b>Definition:</b> The broad science of making machines “smart” — capable of mimicking human intelligence.<br><b>Includes:</b> Perception, reasoning, learning, decision-making.<br><b>Examples:</b> Chess-playing bots, virtual assistants, self-driving systems." 
+                    },
+                    { 
+                        icon: "📈", 
+                        title: "Machine Learning (ML)", 
+                        description: "A subset of AI focused on learning patterns from data.", 
+                        tags: ["Field", "AI Subset"], 
+                        content: "<b>Examples:</b> Spam detection, product recommendation, fraud detection.",
+                        subItems: [
+                            { title: "Supervised Learning", content: "Learning from labeled data. Includes <b>Regression</b> and <b>Classification</b> tasks."},
+                            { title: "Unsupervised Learning", content: "Finding patterns in unlabeled data, like <b>Clustering</b>."},
+                            { title: "Semi-Supervised Learning", content: "Learning from a mix of labeled and unlabeled data."},
+                            { title: "Reinforcement Learning", content: "Learning through trial and error with rewards."}
+                        ]
+                    },
+                    { 
+                        icon: "🧬", 
+                        title: "Deep Learning (DL)", 
+                        description: "A subset of ML using deep neural networks.", 
+                        tags: ["Field", "ML Subset"],
+                        content: "<b>Inspired by:</b> Human brain neurons (artificial neural networks).<br><b>Used for:</b> Unstructured data like text, image, and audio.<br><b>Examples:</b> Image recognition, voice assistants, chatbots.",
+                        subItems: [
+                            { title: "CNN (Convolutional Neural Networks)", content: "Specially designed for <b>image and spatial data</b>. They detect features like edges, textures, and objects.<br><b>Examples:</b> Face recognition, medical imaging, object detection.", tags: ["Architecture", "Vision"] },
+                            { title: "RNN (Recurrent Neural Networks)", content: "Built for <b>sequential data</b>, maintaining memory of previous steps.<br><b>Examples:</b> Time series, language modeling, speech processing.", tags: ["Architecture", "Sequence"] },
+                            { title: "LSTM (Long Short-Term Memory)", content: "An improved RNN that can handle <b>long-term dependencies</b> by remembering what to keep or forget.<br><b>Examples:</b> Text generation, music composition, translation.", tags: ["Architecture", "Sequence"] }
+                        ]
+                    },
+                    { 
+                        icon: "🎮", 
+                        title: "Reinforcement Learning (RL)", 
+                        description: "Agents learn by taking actions to maximize reward.", 
+                        tags: ["Field", "Learning"], 
+                        content: "A type of ML where agents learn by taking actions in an environment to maximize cumulative reward.<br><b>Core terms:</b> Agent, Environment, Reward, Policy.<br><b>Examples:</b> Game-playing AI (Atari, AlphaGo), robotics." 
+                    },
+                    { 
+                        icon: "📊", 
+                        title: "Data Science", 
+                        description: "Extracting insights and building models from data.", 
+                        tags: ["Related Field"], 
+                        content: "A broader field combining statistics, ML, data wrangling, and domain knowledge.<br><b>Tools include:</b> Python, R, SQL, visualization, ML libraries.<br><i>Not all data science is AI, but AI benefits greatly from it.</i>" 
+                    },
+                    { 
+                        icon: "🗣️", 
+                        title: "Natural Language Processing (NLP)", 
+                        description: "Understanding and generating human language.", 
+                        tags: ["Field", "Language"], 
+                        content: "<b>Examples:</b> ChatGPT, Google Translate, Siri, Grammarly.",
+                        subItems: [
+                            { title: "NLU (Natural Language Understanding)", content: "Interpreting meaning, intent (e.g., sentiment analysis, question answering)."},
+                            { title: "NLG (Natural Language Generation)", content: "Generating human-like text (e.g., summarization, chatbot replies)."}
+                        ]
+                    },
+                    { 
+                        icon: "👁️", 
+                        title: "Computer Vision (CV)", 
+                        description: "Enabling machines to interpret visual information.", 
+                        tags: ["Field", "Vision"], 
+                        content: "<b>Examples:</b> Face ID, autonomous driving, medical imaging.",
+                        subItems: [
+                            { title: "Image classification", content: "Assigning a label to an entire image."},
+                            { title: "Object detection", content: "Identifying and locating objects within an image."},
+                            { title: "Facial recognition", content: "Identifying a person from a digital image."},
+                            { title: "Image segmentation", content: "Partitioning an image into multiple segments or objects."}
+                        ]
+                    },
+                    { 
+                        icon: "📚", 
+                        title: "Large Language Models (LLMs)", 
+                        description: "Models trained on massive text corpora.", 
+                        tags: ["Model", "NLP"], 
+                        content: "Built using <b>Transformer architectures</b>, not RNNs or LSTMs, which were precursors.<br><b>Capable of:</b> Q&A, summarization, coding, dialogue, translation.<br><b>Examples:</b> GPT-4, Claude, LLaMA, Gemini." 
+                    },
+                    { 
+                        icon: "✍️", 
+                        title: "Prompt & Context Engineering", 
+                        description: "Crafting effective inputs and managing conversational context for AI models.", 
+                        tags: ["Technique", "LLM"], 
+                        subItems: [
+                            { title: "What is Prompt Engineering?", content: "The art and science of crafting inputs (prompts) to AI models (especially LLMs) to get accurate, relevant, and useful outputs. It helps guide AI’s behavior by framing the task clearly and is critical for improving response quality without retraining the model." },
+                            { title: "Types of Prompt Engineering", content: `<table>
+                                <thead><tr><th>Type</th><th>Description</th><th>Example</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Instruction Prompting</td><td>Directly telling the model what to do.</td><td>“Translate the following text to French:”</td></tr>
+                                    <tr><td>Few-Shot Prompting</td><td>Providing a few input-output examples before the actual query.</td><td>“Q: What is the capital of France? A: Paris. Q: What is the capital of Germany?”</td></tr>
+                                    <tr><td>Zero-Shot Prompting</td><td>Asking the model to perform a task without examples.</td><td>“Summarize the following article:”</td></tr>
+                                    <tr><td>Chain-of-Thought Prompting</td><td>Encouraging the model to reason step-by-step.</td><td>“Explain step-by-step how to solve this math problem:”</td></tr>
+                                    <tr><td>Role-Play Prompting</td><td>Assigning a persona or role to the model.</td><td>“You are an expert financial advisor...”</td></tr>
+                                    <tr><td>Contextual Prompting</td><td>Including relevant background information or data in the prompt.</td><td>“Based on the latest sales data below, predict next month’s revenue:”</td></tr>
+                                    <tr><td>Prompt Tuning / Soft Prompting</td><td>Advanced: adjusting learned vectors (soft prompts) to steer model behavior.</td><td>Used in research and custom model training</td></tr>
+                                </tbody>
+                            </table>` },
+                            { title: "What is Context Engineering?", content: "The practice of designing and managing the context provided to an LLM or AI agent for multi-turn conversations or complex tasks. It ensures the model remembers relevant info and stays on task.<br><b>Often involves:</b> Chunking large documents, managing token limits, and providing external data sources (RAG)." }
+                        ]
+                    },
+                    { 
+                        icon: "🔁", 
+                        title: "Retrieval-Augmented Generation (RAG)", 
+                        description: "Combining retrieval with LLM generation.", 
+                        tags: ["Technique", "LLM"], 
+                        content: "<b>Used in:</b> Chatbots, enterprise search, customer support.",
+                        subItems: [
+                           { title: "Embeddings", content: "Embeddings are numerical representations (vectors) of text, images, or other data, where similar items have similar numerical representations. They are crucial for RAG as they allow the system to find relevant documents by comparing the numerical similarity between the user's query and the documents in the knowledge base." },
+                           { title: "Typical Flow", content: "1. Retrieve relevant documents (using search or embeddings).<br>2. Feed results to an LLM.<br>3. Generate context-aware, grounded output."}
+                        ]
+                    },
+                    { 
+                        icon: "🤖", 
+                        title: "AI Agents", 
+                        description: "Autonomous systems that perceive, reason, and act.", 
+                        tags: ["Concept", "Advanced"], 
+                        content: "<b>Examples:</b> AutoGPT, LangChain agents, copilots, AI workflows.",
+                        subItems: [
+                            { title: "Modern AI agents combine:", content: "Memory, Tool use (e.g., web search, API calling), Planning and goal management, and LLM reasoning."}
+                        ]
+                    },
+                    { 
+                        icon: "🌳", 
+                        title: "Visual Hierarchy", 
+                        description: "How different fields of AI are related.", 
+                        tags: ["Concept"], 
+                        content: `<pre><code>AI
+├── ML
+│   ├── DL
+│   │   ├── CNN → Vision
+│   │   ├── RNN → Sequences
+│   │   └── LSTM → Long sequences
+│   ├── NLP
+│   │   ├── NLU
+│   │   └── NLG
+│   └── CV
+├── RL
+├── LLMs
+│   ├── RAG
+│   └── Agents
+└── Data Science (supportive)</code></pre>`
+                    },
+                    { 
+                        icon: "🆚", 
+                        title: "Analysis vs. Science vs. ML", 
+                        description: "Comparing the goals and outputs of related data fields.", 
+                        tags: ["Comparison"], 
+                        content: `<div class="overflow-x-auto"><table>
+                                    <thead>
+                                        <tr><th>Aspect</th><th>Data Analysis</th><th>Data Science</th><th>Machine Learning (ML)</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td><b>🔍 Goal</b></td><td>Understand past/present through descriptive stats and patterns</td><td>Extract insights, build models, drive decisions</td><td>Enable systems to learn patterns and make predictions</td></tr>
+                                        <tr><td><b>🎯 Primary Focus</b></td><td>Summarize data, answer business questions</td><td>Full data lifecycle + modeling + decision support</td><td>Predictive modeling, automation, and optimization</td></tr>
+                                        <tr><td><b>📦 Data Used</b></td><td>Historical data (cleaned)</td><td>Structured + unstructured data</td><td>Structured/unstructured, often large datasets</td></tr>
+                                        <tr><td><b>🧠 Core Tasks</b></td><td>- Aggregation<br>- Visualization<br>- Trends & summaries</td><td>- Exploration<br>- Modeling<br>- Experimentation</td><td>- Model training<br>- Tuning<br>- Deployment</td></tr>
+                                        <tr><td><b>🛠️ Tools</b></td><td>Excel, SQL, Tableau, Python (Pandas, Matplotlib)</td><td>Python/R, SQL, ML Libraries, Spark, Jupyter, Dash</td><td>Scikit-learn, TensorFlow, PyTorch, XGBoost</td></tr>
+                                        <tr><td><b>📚 Skills</b></td><td>Statistics, SQL, basic scripting</td><td>Statistics, ML, domain expertise, programming</td><td>Linear algebra, calculus, optimization, ML algorithms</td></tr>
+                                        <tr><td><b>🔄 Output</b></td><td>Reports, dashboards, KPIs</td><td>Insights, recommendations, predictive models</td><td>Trained models for prediction, classification, etc.</td></tr>
+                                        <tr><td><b>🤖 Example</b></td><td>“Sales dropped 10% in Q2”</td><td>“Customers with X traits are more likely to churn”</td><td>“Predict if a user will churn next month”</td></tr>
+                                    </tbody>
+                                </table></div>` 
+                    },
+                ]
+            },
+            {
+                title: "🛠️ Building & Evaluating AI",
+                description: "The processes for crafting effective AI inputs and measuring model performance.",
+                items: [
+                    { 
+                        icon: "🧪", 
+                        title: "AI Evaluation", 
+                        description: "Metrics and methods to measure model performance across different AI tasks.", 
+                        tags: ["Process", "Metrics"], 
+                        subItems: [
+                            { 
+                                title: "Traditional ML/DL Model Evaluation", 
+                                content: `Used for Classification & Regression tasks.
+                                <h5 class="font-bold mt-4 mb-2">📊 Classification Metrics:</h5>
+                                <table>
+                                    <thead><tr><th>Metric</th><th>What it Measures</th><th>When to Use</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>Accuracy</td><td>% of correct predictions</td><td>When classes are balanced</td></tr>
+                                        <tr><td>Precision</td><td>TP / (TP + FP)</td><td>When false positives are costly (e.g., spam detection)</td></tr>
+                                        <tr><td>Recall (Sensitivity)</td><td>TP / (TP + FN)</td><td>When false negatives are costly (e.g., cancer detection)</td></tr>
+                                        <tr><td>F1-Score</td><td>Harmonic mean of Precision & Recall</td><td>When you need balance</td></tr>
+                                        <tr><td>Confusion Matrix</td><td>TP, FP, FN, TN in one table</td><td>To understand types of errors</td></tr>
+                                        <tr><td>ROC-AUC</td><td>Trade-off between TPR and FPR</td><td>To evaluate classifier performance independent of threshold</td></tr>
+                                    </tbody>
+                                </table>
+                                <h5 class="font-bold mt-4 mb-2">📈 Regression Metrics:</h5>
+                                <table>
+                                    <thead><tr><th>Metric</th><th>What it Measures</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>MSE / RMSE</td><td>Penalizes large errors</td></tr>
+                                        <tr><td>MAE</td><td>Average absolute error</td></tr>
+                                        <tr><td>R² (R-squared)</td><td>Proportion of variance explained</td></tr>
+                                    </tbody>
+                                </table>`
+                            },
+                            { 
+                                title: "LLM Evaluation", 
+                                content: `
+                                <h5 class="font-bold mt-4 mb-2">🧠 Automatic Metrics</h5>
+                                <table>
+                                    <thead><tr><th>Metric</th><th>Use Case</th><th>Description</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>Perplexity</td><td>Language modeling</td><td>How well a model predicts the next word (lower = better)</td></tr>
+                                        <tr><td>BLEU / ROUGE</td><td>Text generation</td><td>Compare overlap with human-written references</td></tr>
+                                        <tr><td>METEOR / BERTScore</td><td>Semantic similarity</td><td>Measures how semantically similar outputs are to ground truth</td></tr>
+                                        <tr><td>Exact Match (EM)</td><td>QA tasks</td><td>Perfect match between predicted and expected answer</td></tr>
+                                        <tr><td>Token-level Accuracy</td><td>Code generation, translation</td><td>Measures precision per token</td></tr>
+                                    </tbody>
+                                </table>
+                                <h5 class="font-bold mt-4 mb-2">👥 Human Evaluation</h5>
+                                <table>
+                                    <thead><tr><th>Dimension</th><th>Questions</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>Helpfulness</td><td>Did it solve the user’s problem?</td></tr>
+                                        <tr><td>Relevance</td><td>Was the response on-topic?</td></tr>
+                                        <tr><td>Fluency</td><td>Was the response grammatically correct?</td></tr>
+                                        <tr><td>Coherence</td><td>Was the logic sound?</td></tr>
+                                        <tr><td>Factuality</td><td>Was it grounded in truth?</td></tr>
+                                    </tbody>
+                                </table>`
+                            },
+                            { 
+                                title: "RAG Evaluation", 
+                                content: `Dual Evaluation: Retriever + Generator
+                                <table>
+                                    <thead><tr><th>Stage</th><th>Metrics</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>Retriever</td><td>Recall@K, MRR (Mean Reciprocal Rank), Precision@K</td></tr>
+                                        <tr><td>Generator</td><td>Faithfulness (Did it use retrieved docs?), Fluency, Relevance</td></tr>
+                                    </tbody>
+                                </table>
+                                <p class="mt-2"><b>📍 Faithfulness:</b> Is the output grounded in the retrieved docs?</p>
+                                <p><b>📍 Hallucination Rate:</b> % of responses not supported by retrieved documents</p>`
+                            },
+                            { 
+                                title: "AI Agent Evaluation", 
+                                content: `For tool-using agents / planning agents.
+                                <table>
+                                    <thead><tr><th>Category</th><th>Metrics / Examples</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>Task Success Rate</td><td>% of tasks completed end-to-end</td></tr>
+                                        <tr><td>Number of Tool Calls</td><td>Measures planning efficiency</td></tr>
+                                        <tr><td>Latency</td><td>How long does it take to complete a task</td></tr>
+                                        <tr><td>Re-ask Rate</td><td>Does it ask clarifying questions too often?</td></tr>
+                                        <tr><td>Correct Tool Use</td><td>Did it select the right tool/function?</td></tr>
+                                        <tr><td>Autonomy Score</td><td>How well it performs without human intervention</td></tr>
+                                        <tr><td>Benchmarks</td><td>TuringBench / HELM</td></tr>
+                                    </tbody>
+                                </table>`
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                title: "🚀 Deploying AI/ML",
+                description: "Practices for taking models from development to real-world production environments.",
+                items: [
+                    { 
+                        icon: "⚙️", 
+                        title: "MLOps (Machine Learning Operations)", 
+                        description: "Automating and managing the entire ML lifecycle.", 
+                        tags: ["Operations", "ML"], 
+                        content: "<b>What:</b> Practices and tools to automate and manage the entire ML lifecycle — from development, training, validation, deployment, monitoring, and governance.<br><b>Common Tools:</b> Kubeflow, MLflow, TensorFlow Extended (TFX), Sagemaker, Azure ML, Databricks MLflow.",
+                        subItems: [
+                            { title: "Goals of MLOps", content: "• Continuous Integration & Continuous Deployment (CI/CD) for ML models<br>• Reproducibility & versioning of data, code, and models<br>• Automated testing and validation<br>• Scalable model serving and monitoring for performance, bias, and drift" }
+                        ]
+                    },
+                    { 
+                        icon: "🚀", 
+                        title: "LLMOps (Large Language Model Operations)", 
+                        description: "Specialized practices for managing Large Language Models.", 
+                        tags: ["Operations", "LLM"],
+                        content: "<b>What:</b> Specialized operational practices for managing LLMs, focusing on deployment, monitoring, prompt/version management, cost optimization, and safety.<br><b>Tools & Platforms:</b> OpenAI API management, Hugging Face Hub, LangChain deployment tools, Azure OpenAI Service, Replicate.",
+                        subItems: [
+                            { title: "Key Challenges", content: "• High computational cost & latency<br>• Managing prompt libraries and prompt tuning<br>• Monitoring hallucination, bias, and ethical issues<br>• Model updates and fine-tuning workflows" }
+                        ]
+                    },
+                    { 
+                        icon: "🏢", 
+                        title: "Deployment Architectures", 
+                        description: "How and where models are deployed.", 
+                        tags: ["Concept", "Deployment"], 
+                        subItems: [
+                            { title: "Batch Deployment", content: "Process large datasets periodically (e.g., nightly predictions)." },
+                            { title: "Online/Real-time Deployment", content: "Serve predictions via low-latency APIs (e.g., recommendation engines)." },
+                            { title: "Edge Deployment", content: "Run models on local devices (mobile, IoT) with constraints on compute and connectivity." },
+                            { title: "Hybrid Deployment", content: "Combination of edge and cloud (e.g., preprocess locally, complex inference in cloud)." }
+                        ]
+                    },
+                    {
+                        icon: "🧩",
+                        title: "Key Components of AI/ML Deployment",
+                        description: "The core building blocks of a robust deployment pipeline.",
+                        tags: ["Concept", "Deployment"],
+                        subItems: [
+                            { title: "Model Versioning", content: "Track versions of models and datasets to reproduce results." },
+                            { title: "Continuous Integration/Delivery (CI/CD)", content: "Automate testing, building, and deployment of ML models." },
+                            { title: "Model Serving", content: "Expose models via APIs or batch jobs for real-time or batch predictions." },
+                            { title: "Monitoring & Observability", content: "Track model performance, data drift, latency, and accuracy in production." },
+                            { title: "Scaling", content: "Autoscale infrastructure to meet demand (cloud, Kubernetes)." },
+                            { title: "Data Pipelines", content: "Automate data extraction, transformation, and loading (ETL/ELT)." },
+                            { title: "Security & Governance", content: "Ensure compliance, data privacy, access control, and audit trails." }
+                        ]
+                    },
+                    {
+                        icon: "📈",
+                        title: "Emerging Trends & Best Practices",
+                        description: "Modern approaches to enhance AI/ML deployment.",
+                        tags: ["Trend", "Best Practice"],
+                        subItems: [
+                            { title: "Feature Stores", content: "Centralized repositories for managing and serving ML features consistently across training and serving." },
+                            { title: "Explainability & Monitoring", content: "Real-time model explainability for trust and debugging." },
+                            { title: "Model Retraining Pipelines", content: "Automated retraining triggered by performance degradation or data drift." },
+                            { title: "Cost Optimization", content: "Spot instances, model quantization, distillation, and efficient serving." },
+                            { title: "Governance", content: "Ethical AI frameworks, bias detection in production, and compliance." }
+                        ]
+                    },
+                    { 
+                        icon: "📡", 
+                        title: "How is AIOps different from MLOps/LLMOps?", 
+                        description: "Understanding the distinction between AI for IT and Ops for AI.", 
+                        tags: ["Operations", "Comparison"],
+                        content: "<b>AIOps (Artificial Intelligence for IT Operations)</b><br><b>What:</b> Using AI and ML techniques to automate, enhance, and optimize IT operations such as incident detection, root cause analysis, and predictive maintenance.<br><b>Purpose:</b> Improve reliability and efficiency of IT infrastructure through data-driven automation.<br><b>Examples:</b> Automated anomaly detection in logs, intelligent alerting, capacity forecasting.<br><b>Tools:</b> Moogsoft, Splunk ITSI, Dynatrace.",
+                        subItems: [
+                            { title: "The Key Difference", content: "<b>Focus:</b> AIOps uses AI to solve IT problems. MLOps and LLMOps are about solving the operational problems of deploying and managing AI models themselves.<br><br>Think of it this way: AIOps is AI applied *to* the system, while MLOps/LLMOps is the system *for* AI." }
+                        ]
+                    }
+                ]
+            },
+            {
+                title: "📖 AI Glossary",
+                description: "Definitions of key terms used in the field of AI.",
+                items: [
+                    { icon: "⚖️", title: "Bias", description: "Systematic error or unfairness in data or model outcomes.", tags: ["Concept", "Ethics"], content: "Can arise from imbalanced training data, flawed assumptions, or societal biases reflected in data. It's important to detect and mitigate to ensure fairness and ethical AI." },
+                    { icon: "ရှင်း", title: "Explainable AI (XAI)", description: "Methods that make AI decisions understandable to humans.", tags: ["Concept", "Ethics"], content: "Helps users trust, audit, and debug AI models by explaining why a model made a certain prediction or decision. Examples include Feature importance, decision trees, and SHAP values." },
+                    { icon: "🛡️", title: "Responsible AI", description: "Designing and deploying AI systems ethically and safely.", tags: ["Framework", "Ethics"], content: "Encompasses fairness, privacy, accountability, robustness, and compliance with laws and social norms. Aims to minimize harms and maximize societal benefits." },
+                    { icon: "🎟️", title: "Tokens", description: "The basic units of data that language models process.", tags: ["Concept", "LLM"], content: "Can be words, subwords, or characters. For example, the sentence \"ChatGPT is great\" might split into tokens like [\"Chat\", \"G\", \"PT\", \" is\", \" great\"]. Token limits affect input length and model performance." },
+                    { icon: "🔮", title: "Inference", description: "Using a trained model to make predictions on new data.", tags: ["Process", "ML"], content: "Involves feeding input data into the model and receiving the model’s output (e.g., classification, generated text). This is different from training, which updates model parameters." },
+                    { icon: "⚙️", title: "Parameters", description: "Internal values learned by a model during training.", tags: ["Concept", "ML"], content: "These are the weights and biases that define the model’s behavior and determine how it processes input to produce output. Larger models like GPT-4 have billions of parameters." },
+                    { icon: "🌡️", title: "Temperature", description: "A parameter to control randomness in generative models.", tags: ["Parameter", "LLM"], content: "Low temperature (e.g., 0.1) → More deterministic, focused output.<br>High temperature (e.g., 1.0 or above) → More diverse, creative, but potentially less coherent output." },
+                    { icon: "📉", title: "Underfitting", description: "When a model is too simple to capture data patterns.", tags: ["Problem", "ML"], content: "Results in poor performance both on training and test data. Symptoms include high error and low accuracy because the model hasn't learned enough." },
+                    { icon: "📈", title: "Overfitting", description: "When a model learns training data too well, including noise.", tags: ["Problem", "ML"], content: "Performs excellently on training data but poorly on unseen test data (low generalization). Symptoms include low training error but high test error." },
+                    { icon: "👻", title: "Hallucination", description: "When AI produces factually incorrect or fabricated outputs.", tags: ["Problem", "LLM"], content: "Common in generative systems, especially when lacking grounding or context. A critical challenge to address in responsible AI and model evaluation." },
+                    { icon: "🎭", title: "Deepfake", description: "Synthetic media created using AI to impersonate or manipulate people.", tags: ["Concept", "Ethics"], content: "Synthetic media (video, audio, images) created using techniques like GANs to realistically impersonate or manipulate people. Can be used for entertainment or malicious purposes (misinformation, fraud), which raises ethical and detection challenges." },
+                    { icon: "🚦", title: "AI Guardrails", description: "Safety measures to keep AI behavior within boundaries.", tags: ["Concept", "Safety"], content: "Safety measures, constraints, and monitoring systems designed to keep AI behavior aligned with ethical, legal, and practical boundaries. Includes filters, moderation, content policies, and runtime checks to prevent harmful or biased outputs." },
+                    { icon: "🧑‍🔬", title: "Human-in-the-Loop (HITL)", description: "AI systems that incorporate human oversight.", tags: ["Process", "Collaboration"], content: "AI systems designed to incorporate human oversight or intervention during training, decision-making, or deployment. Used to improve accuracy, handle edge cases, and maintain accountability. Common in sensitive fields like healthcare and finance." },
+                    { icon: "🤖", title: "Agentic Workflow Automation", description: "AI agents autonomously performing multi-step tasks.", tags: ["Concept", "Automation"], content: "Automation workflows where AI agents autonomously perform multi-step tasks by planning, decision-making, and interacting with tools or APIs. Reduces human manual work by chaining AI capabilities dynamically. Examples include AutoGPT completing research and report writing end-to-end." },
+                    { icon: "🧑‍🤝‍🧑", title: "Multi-Agentic Orchestration", description: "Coordinated collaboration among multiple specialized AI agents.", tags: ["Concept", "Automation"], content: "Coordinated collaboration among multiple AI agents, each specializing in different roles, working together toward a shared goal. Enables complex workflows by distributing tasks intelligently. Examples include separate agents for data retrieval, reasoning, and execution working as a team." }
+                ]
+            }
+        ];
+
+        const container = document.getElementById('nomenclature-container');
+        const tagColors = {
+            "Field": "bg-blue-100 text-blue-800",
+            "Concept": "bg-indigo-100 text-indigo-800",
+            "Technique": "bg-purple-100 text-purple-800",
+            "Architecture": "bg-pink-100 text-pink-800",
+            "Process": "bg-yellow-100 text-yellow-800",
+            "Problem": "bg-red-100 text-red-800",
+            "Ethics": "bg-green-100 text-green-800",
+            "Operations": "bg-gray-200 text-gray-800",
+            "Data Type": "bg-teal-100 text-teal-800",
+            "Default": "bg-gray-100 text-gray-800",
+            "Deployment": "bg-orange-100 text-orange-800",
+            "Trend": "bg-lime-100 text-lime-800",
+            "Best Practice": "bg-cyan-100 text-cyan-800",
+            "Comparison": "bg-violet-100 text-violet-800",
+            "Safety": "bg-red-100 text-red-800",
+            "Collaboration": "bg-fuchsia-100 text-fuchsia-800",
+            "Automation": "bg-sky-100 text-sky-800"
+        };
+        let currentQuizQuestions = [];
+        let userAnswers = [];
+
+        function createSubCard(subItem) {
+            let subTagsHtml = (subItem.tags || []).map(tag => {
+                const colorClass = tagColors[tag] || tagColors["Default"];
+                return `<span class="inline-block px-2 py-1 text-xs font-medium rounded-full ${colorClass}">${tag}</span>`;
+            }).join(' ');
+
+            let subSubItemsHtml = '';
+            if (subItem.subItems) {
+                 subSubItemsHtml = `<div class="space-y-3 mt-3">` + subItem.subItems.map(createSubCard).join('') + `</div>`;
+            }
+
+            return `
+                <div class="sub-card bg-slate-50 rounded-lg border border-gray-200/80 overflow-hidden">
+                    <div class="collapsible-header flex justify-between items-center p-4 cursor-pointer hover:bg-slate-100">
+                        <h4 class="font-semibold text-gray-800">${subItem.title}</h4>
+                        <svg class="w-5 h-5 text-gray-400 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="content-area">
+                        <div class="p-4 pt-2 text-sm text-gray-600 border-t border-gray-200">
+                            ${subItem.content || ''}
+                            ${subSubItemsHtml}
+                            ${subTagsHtml ? `<div class="mt-2 flex flex-wrap gap-2">${subTagsHtml}</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createCard(item) {
+            const cardWrapper = document.createElement('div');
+            cardWrapper.className = 'card-container'; // Wrapper for search filtering
+
+            let tagsHtml = (item.tags || []).map(tag => {
+                const colorClass = tagColors[tag] || tagColors["Default"];
+                return `<span class="inline-block px-2 py-1 text-xs font-medium rounded-full ${colorClass}">${tag}</span>`;
+            }).join(' ');
+
+            let subItemsHtml = '';
+            if (item.subItems) {
+                subItemsHtml = `<div class="space-y-3">` + item.subItems.map(createSubCard).join('') + `</div>`;
+            }
+            
+            let mainContentHtml = '';
+            if (item.content) {
+                 mainContentHtml = `<div class="pb-4">${item.content}</div>`;
+            }
+            
+            const hasExpandableContent = item.subItems || item.content;
+
+            cardWrapper.innerHTML = `
+                <div class="card bg-white p-5 rounded-xl border border-gray-200 shadow-sm transition-all">
+                    <div class="flex justify-between items-start">
+                         <div class="flex items-start space-x-4 flex-grow">
+                            <div class="text-3xl flex-shrink-0 w-8 text-center">${item.icon}</div>
+                            <div class="flex-grow collapsible-header ${hasExpandableContent ? 'cursor-pointer' : ''}">
+                                <h3 class="font-bold text-lg text-gray-900">${item.title}</h3>
+                                <p class="text-gray-500 text-sm">${item.description}</p>
+                                <div class="mt-3 flex flex-wrap gap-2">${tagsHtml}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 flex-shrink-0 pl-4">
+                            <button class="teach-btn p-2 rounded-full hover:bg-gray-200" title="Open Whiteboard">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                                  <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                                  <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            ${hasExpandableContent ? `<svg class="collapsible-header-icon w-5 h-5 text-gray-400 transition-transform cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>` : '<div class="w-5 h-5"></div>'}
+                        </div>
+                    </div>
+                    ${hasExpandableContent ? `<div class="content-area pt-4 border-t border-gray-200 mt-4">${mainContentHtml}${subItemsHtml}</div>` : ''}
+                </div>
+            `;
+            return cardWrapper;
+        }
+
+        function renderContent() {
+            const mainContentContainer = document.getElementById('nomenclature-container');
+             while (mainContentContainer.children.length > 1) {
+                mainContentContainer.removeChild(mainContentContainer.lastChild);
+            }
+
+            aiNomenclatureData.forEach(section => {
+                const sectionEl = document.createElement('section');
+                
+                const header = document.createElement('div');
+                header.className = 'mb-6';
+                header.innerHTML = `
+                    <h2 class="text-3xl font-bold text-gray-900">${section.title}</h2>
+                    <p class="mt-1 text-lg text-gray-500">${section.description}</p>
+                `;
+                sectionEl.appendChild(header);
+
+                const listContainer = document.createElement('div');
+                listContainer.className = 'space-y-4';
+                
+                section.items.forEach(item => {
+                    const card = createCard(item);
+                    listContainer.appendChild(card);
+                });
+
+                sectionEl.appendChild(listContainer);
+                mainContentContainer.appendChild(sectionEl);
+            });
+        }
+
+        function handleCardClicks(scope) {
+            scope.addEventListener('click', e => {
+                const header = e.target.closest('.collapsible-header, .collapsible-header-icon');
+                if (!header) return;
+
+                const card = header.closest('.card, .sub-card');
+                const content = card.querySelector(':scope > .content-area');
+                if (!content) return;
+
+                const icon = header.closest('.card, .sub-card').querySelector(':scope > div > .collapsible-header-icon, :scope > .collapsible-header > svg');
+                
+                content.classList.toggle('open');
+                if (icon) {
+                    icon.classList.toggle('rotate-180');
+                }
+            });
+        }
+
+        function handleSearch() {
+            const searchBar = document.getElementById('search-bar');
+            searchBar.addEventListener('input', () => {
+                const searchTerm = searchBar.value.toLowerCase().trim();
+                const allCards = container.querySelectorAll('.card-container');
+                const quizSection = document.getElementById('quiz-section-container');
+
+                if(searchTerm) {
+                    quizSection.classList.add('hidden-by-search');
+                } else {
+                    quizSection.classList.remove('hidden-by-search');
+                }
+
+                allCards.forEach(card => {
+                    const cardText = card.textContent.toLowerCase();
+                    if (cardText.includes(searchTerm)) {
+                        card.classList.remove('hidden-by-search');
+                    } else {
+                        card.classList.add('hidden-by-search');
+                    }
+                });
+            });
+        }
+        
+        // --- Quiz Logic ---
+        function startQuiz() {
+            const count = document.getElementById('question-count').value;
+            const shuffled = [...quizQuestions].sort(() => 0.5 - Math.random());
+            currentQuizQuestions = shuffled.slice(0, count);
+            userAnswers = new Array(currentQuizQuestions.length).fill(null);
+
+            const questionsContainer = document.getElementById('quiz-questions');
+            questionsContainer.innerHTML = '';
+
+            currentQuizQuestions.forEach((q, index) => {
+                const optionsHtml = q.options.map(option => `
+                    <label class="block">
+                        <input type="radio" name="question-${index}" value="${option}">
+                        <span class="ml-2">${option}</span>
+                    </label>
+                `).join('');
+
+                const questionEl = document.createElement('div');
+                questionEl.className = 'p-4 border rounded-md bg-slate-50';
+                questionEl.innerHTML = `
+                    <p class="font-semibold mb-2">${index + 1}. ${q.question}</p>
+                    <div class="space-y-1">${optionsHtml}</div>
+                `;
+                questionsContainer.appendChild(questionEl);
+            });
+            
+            const submitBtn = document.createElement('button');
+            submitBtn.id = 'submit-quiz-btn';
+            submitBtn.textContent = 'Submit Quiz';
+            submitBtn.className = 'mt-6 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700';
+            questionsContainer.appendChild(submitBtn);
+
+            document.getElementById('quiz-setup').classList.add('hidden');
+            questionsContainer.classList.remove('hidden');
+        }
+
+        function submitQuiz() {
+            let score = 0;
+            currentQuizQuestions.forEach((q, index) => {
+                const selectedOption = document.querySelector(`input[name="question-${index}"]:checked`);
+                userAnswers[index] = {
+                    question: q.question,
+                    selected: selectedOption ? selectedOption.value : "No answer",
+                    correctAnswer: q.answer,
+                    isCorrect: selectedOption ? selectedOption.value === q.answer : false
+                };
+                if (userAnswers[index].isCorrect) {
+                    score++;
+                }
+            });
+
+            const resultsContainer = document.getElementById('quiz-results');
+            resultsContainer.innerHTML = `
+                <h3 class="text-xl font-bold">Quiz Complete!</h3>
+                <p class="my-2 text-lg">You scored ${score} out of ${currentQuizQuestions.length}.</p>
+                <button id="review-answers-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Review Answers</button>
+                <button id="retake-quiz-btn" class="ml-4 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">Take Another Quiz</button>
+            `;
+
+            document.getElementById('quiz-questions').classList.add('hidden');
+            resultsContainer.classList.remove('hidden');
+        }
+        
+        function showReview() {
+            const reviewContent = document.getElementById('review-content');
+            reviewContent.innerHTML = '';
+            
+            const incorrectAnswers = userAnswers.filter(a => !a.isCorrect);
+            const correctAnswers = userAnswers.filter(a => a.isCorrect);
+
+            incorrectAnswers.forEach(answer => {
+                const el = document.createElement('div');
+                el.className = 'p-4 rounded-md bg-red-50 border border-red-200';
+                el.innerHTML = `
+                    <p class="font-semibold">${answer.question}</p>
+                    <p class="mt-2 text-red-700">Your answer: ${answer.selected}</p>
+                    <p class="mt-1 text-green-700">Correct answer: ${answer.correctAnswer}</p>
+                `;
+                reviewContent.appendChild(el);
+            });
+            
+            correctAnswers.forEach(answer => {
+                const el = document.createElement('div');
+                el.className = 'p-4 rounded-md bg-green-50 border border-green-200';
+                el.innerHTML = `
+                    <p class="font-semibold">${answer.question}</p>
+                    <p class="mt-2 text-green-700">Correct answer: ${answer.correctAnswer}</p>
+                `;
+                reviewContent.appendChild(el);
+            });
+
+            document.getElementById('quiz-overlay').classList.remove('hidden');
+        }
+        
+        function resetQuiz() {
+            document.getElementById('quiz-results').classList.add('hidden');
+            document.getElementById('quiz-setup').classList.remove('hidden');
+            currentQuizQuestions = [];
+            userAnswers = [];
+        }
+
+        // --- Whiteboard Logic ---
+        const whiteboardOverlay = document.getElementById('whiteboard-overlay');
+        const canvas = document.getElementById('whiteboard-canvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            draw(e);
+        }
+        function stopDrawing() {
+            isDrawing = false;
+            ctx.beginPath();
+        }
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+            ctx.lineWidth = document.getElementById('brushSize').value;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = document.getElementById('colorPicker').value;
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function openWhiteboard(item) {
+            document.getElementById('whiteboard-title').textContent = item.title;
+            const contentPanel = document.getElementById('whiteboard-content-panel');
+            const tempCard = createCard(item);
+            contentPanel.innerHTML = tempCard.innerHTML;
+            
+            const contentArea = contentPanel.querySelector('.content-area');
+            if(contentArea) contentArea.classList.add('open');
+            
+            whiteboardOverlay.classList.remove('hidden');
+            resizeCanvas();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('nomenclature-container');
+            const whiteboardOverlay = document.getElementById('whiteboard-overlay');
+            renderContent();
+            handleCardClicks(document.body); // Attach to body to handle main content and overlays
+            handleSearch();
+            
+            // Quiz Event Listeners
+            document.getElementById('start-quiz-btn').addEventListener('click', startQuiz);
+            document.getElementById('quiz-questions').addEventListener('click', e => { if (e.target.id === 'submit-quiz-btn') submitQuiz(); });
+            document.getElementById('quiz-results').addEventListener('click', e => {
+                if (e.target.id === 'review-answers-btn') showReview();
+                if (e.target.id === 'retake-quiz-btn') resetQuiz();
+            });
+            
+            // Overlay Close Listeners
+            document.querySelectorAll('.close-overlay-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    btn.closest('.overlay').classList.add('hidden');
+                });
+            });
+
+            // Whiteboard Event Listeners
+            document.getElementById('clearCanvas').addEventListener('click', () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('touchstart', startDrawing);
+            canvas.addEventListener('touchend', stopDrawing);
+            canvas.addEventListener('touchmove', draw);
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Teach Button Listener
+            container.addEventListener('click', e => {
+                const teachBtn = e.target.closest('.teach-btn');
+                if (!teachBtn) return;
+                
+                const cardContainer = teachBtn.closest('.card-container');
+                const title = cardContainer.querySelector('h3').textContent;
+                
+                let foundItem;
+                for (const section of aiNomenclatureData) {
+                    foundItem = section.items.find(item => item.title === title);
+                    if (foundItem) break;
+                }
+                
+                if (foundItem) {
+                    openWhiteboard(foundItem);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
